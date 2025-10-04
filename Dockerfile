@@ -1,6 +1,9 @@
 # Usa una imagen oficial de Node.js
 FROM node:20
 
+# Instala wait-for-it para esperar a que MongoDB esté listo
+RUN apt-get update && apt-get install -y wait-for-it
+
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /usr/src/app
 
@@ -16,5 +19,5 @@ COPY . .
 # Expone el puerto 3000 (ajusta si usas otro)
 EXPOSE 3000
 
-# Comando por defecto para iniciar la app
-CMD ["npm", "start"]
+# Espera a que MongoDB esté disponible antes de iniciar la app
+CMD ["sh", "-c", "wait-for-it mongo:27017 --timeout=30 -- node index.js"]
