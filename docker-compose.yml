@@ -14,8 +14,6 @@ services:
     container_name: backend_service
     ports:
       - "5000:3000"
-    volumes:
-      - ./:/usr/src/app
     env_file:
       - ./.env
     environment:
