@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -13,19 +12,19 @@ const carritoRoutes = require('./routes/carrito');
 const ventasRouter = require('./routes/ventas'); // Agrega esta línea
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000; // Usar el puerto del entorno o 3000 por defecto
 
 // Middleware
-app.use(cors({
-  origin: 'https://tecno-api.bitforges.com',
-  methods: ['GET', 'POST', 'PUT', 'DELETE']
-}));
-// Agregar esta línea
-app.use('/users', usersRouter);
+app.use(cors());
+app.use(express.json());
 
-// Conectar a MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+// Configurar el servicio de archivos estáticos para las imágenes
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Conexión a MongoDB (usar variable de entorno o MongoDB local por defecto)
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/gestioner';
+
+mongoose.connect(MONGODB_URI)
 .then(() => console.log('✅ Conectado a MongoDB'))
 .catch(err => console.error('❌ Error conectando a MongoDB:', err));
 
@@ -40,6 +39,8 @@ app.get('/ping', (req, res) => {
   console.log(`📶 Nuevo dispositivo conectado desde: ${ip}`);
   res.json({ message: 'Conectado al backend', ip });
 });
+
+app.use('/users', usersRouter); // ← ESTA ES LA LÍNEA QUE FALTA
 
 // Verificar si la cédula ya existe
 app.get('/users/cedula/:cedula', async (req, res) => {
@@ -96,8 +97,6 @@ app.post('/users', async (req, res) => {
 // Usar el loginRouter para las rutas de login
 app.use('/login', loginRouter);
 
-
-
 // Ruta protegida (debe ir después de importar verificarToken)
 app.get('/ruta-protegida', verificarToken, (req, res) => {
     res.json({ message: 'Acceso permitido', usuario: req.usuario });
@@ -110,13 +109,10 @@ app.use('/carrito', carritoRoutes);
 
 app.use('/ventas', ventasRouter); // Agrega esta línea para montar el router
 
-// Configurar el servicio de archivos estáticos para las imágenes
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Agregar la ruta de upload
 app.use('/upload', uploadRouter);
 
 // Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {  // Escuchar en todas las interfaces
+  console.log(`🚀 Servidor corriendo en http://0.0.0.0:${PORT}`);
 });

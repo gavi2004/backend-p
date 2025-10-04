@@ -21,11 +21,26 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  // Verificar si el archivo es una imagen
-  if (file.mimetype.startsWith('image/')) {
+  console.log('Validando archivo en fileFilter:', {
+    fieldname: file.fieldname,
+    originalname: file.originalname,
+    mimetype: file.mimetype
+  });
+  
+  // Extensiones de imagen permitidas
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
+  const fileExtension = path.extname(file.originalname).toLowerCase();
+  
+  // Verificar si el archivo es una imagen por mimetype O por extensión
+  const isImageMimetype = file.mimetype.startsWith('image/');
+  const isImageExtension = allowedExtensions.includes(fileExtension);
+  
+  if (isImageMimetype || isImageExtension) {
+    console.log('✅ Archivo aceptado como imagen (mimetype:', file.mimetype, ', extensión:', fileExtension + ')');
     cb(null, true);
   } else {
-    cb(new Error('El archivo debe ser una imagen'), false);
+    console.log('❌ Archivo rechazado, mimetype:', file.mimetype, ', extensión:', fileExtension);
+    cb(new Error('El archivo debe ser una imagen (jpg, jpeg, png, gif, webp, bmp, svg)'), false);
   }
 };
 
@@ -37,28 +52,50 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
-router.post('/', verificarToken, upload.single('image'), (req, res) => {
-  try {
-    if (!req.file) {
-      console.log('No se recibió ningún archivo');
-      return res.status(400).json({ error: 'No se proporcionó ningún archivo' });
+router.post('/', verificarToken, (req, res) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      console.error('Error de multer:', {
+        message: err.message,
+        code: err.code,
+        field: err.field
+      });
+      
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ 
+          error: 'El archivo es demasiado grande',
+          details: 'El tamaño máximo permitido es 5MB'
+        });
+      }
+      
+      return res.status(400).json({ 
+        error: 'Error al procesar el archivo',
+        details: err.message 
+      });
     }
     
-    console.log('Archivo recibido:', req.file);
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    console.log('URL generada:', imageUrl);
-    res.json({ url: imageUrl });
-  } catch (error) {
-    console.error('Error completo:', {
-      message: error.message,
-      stack: error.stack,
-      details: error
-    });
-    res.status(500).json({ 
-      error: 'Error al procesar la imagen',
-      details: error.message 
-    });
-  }
+    try {
+      if (!req.file) {
+        console.log('No se recibió ningún archivo');
+        return res.status(400).json({ error: 'No se proporcionó ningún archivo' });
+      }
+      
+      console.log('Archivo recibido:', req.file);
+      const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+      console.log('URL generada:', imageUrl);
+      res.json({ url: imageUrl });
+    } catch (error) {
+      console.error('Error completo:', {
+        message: error.message,
+        stack: error.stack,
+        details: error
+      });
+      res.status(500).json({ 
+        error: 'Error al procesar la imagen',
+        details: error.message 
+      });
+    }
+  });
 });
 
 module.exports = router;
