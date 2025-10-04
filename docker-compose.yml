@@ -8,14 +8,14 @@ services:
     volumes:
       - mongo_data:/data/db
     ports:
-      - "27030:27017"  # Usar un puerto diferente para evitar conflictos
+      - "27035:27035"  # Usar un puerto diferente para evitar conflictos
 
   app:
     build: .
     depends_on:
       - mongo
     environment:
-      - MONGODB_URI=mongodb://root:example@mongo:27017/gestioner?authSource=admin
+      - MONGODB_URI=mongodb://root:example@mongo:27035/gestioner?authSource=admin
       - PORT=3000
     volumes:
       - ./uploads:/app/uploads
