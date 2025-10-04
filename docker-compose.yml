@@ -15,7 +15,7 @@ services:
     depends_on:
       - mongo
     environment:
-      - MONGODB_URI=mongodb://root:example@mongo:27035/gestioner?authSource=admin
+      - MONGODB_URI=mongodb+srv://poto:1234@cluster0.w2dfi9a.mongodb.net/gestioner
       - PORT=3000
     volumes:
       - ./uploads:/app/uploads
